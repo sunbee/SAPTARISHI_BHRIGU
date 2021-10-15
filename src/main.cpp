@@ -151,6 +151,8 @@ String makeMessage() {
   Then convert each numeric value into a formatted string
   for display and embed into serialized JSON payload for 
   shipping to the MQTT broker.
+  Note that values are confined to range based on printable
+  values and non-permissible values are replaced by -99.99.
   */
   /*
   Read the pot on A0. 
@@ -163,30 +165,26 @@ String makeMessage() {
   */
   waterLevel = _sensorArray.get_mcp_waterLevel(PIN_WATER_LEVEL, true);
   char waterLevelDisplay[7];
-  dtostrf(waterLevel, 4, 0, waterLevelDisplay);
+  dtostrf(((waterLevel < 0) || (waterLevel > 1023)) ? -99.99 : waterLevel, 4, 0, waterLevelDisplay);
   /*
   Read the brightness level reported by TSL2591X on I2C bus.
   */
   brightness = _sensorArray.get_tsl_lux();
   char brightnessDisplay[7];
-  dtostrf(brightness, 6, 2, brightnessDisplay);
+  dtostrf(((brightness < 0) || (brightness > 16383)) ? -99.99 : brightness, 6, 2, brightnessDisplay);
   /*
   Read the temperature reported by dsa8b20 "Dallas" on one-wire.
   */
   tempInC = _sensorArray.get_ds18b20_temperature(CELSIUS);
   char tempInCDisplay[7];
-  dtostrf(tempInC, 6, 2, tempInCDisplay); 
+  dtostrf(((tempInC < -99.99) || (tempInC > 999.99)) ? -99.99 : tempInC, 6, 2, tempInCDisplay); 
   /*
   Read the relative humidity and temperature reported by DHT22.
   */
   RH = _sensorArray.get_dht_humidity();
   TempF = _sensorArray.get_dht_temperature(FAHRENHEIT);
-  if (isnan(RH) || isnan(TempF)) {
-    RH = -99.99;
-    TempF = -99.99;
-  }
   char RHDisplay[7];
-  dtostrf(RH, 6, 2, RHDisplay);
+  dtostrf((isnan(RH) || isnan(TempF)) ? -99.99 : RH, 6, 2, RHDisplay);
   /*
   Make the message to publish to the MQTT broker as
   serialized JSON. 
